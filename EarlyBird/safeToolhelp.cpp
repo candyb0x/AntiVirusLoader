@@ -83,7 +83,6 @@ BOOL SafeProcess32Next(SAFE_PROCESSENTRY32* entry) {
     return SafeProcess32First(entry);
 }
 
-// Module32 ϵ�У�����Ŀ����� PEB��
 typedef struct _SAFE_MODULE_CONTEXT {
     HANDLE hProcess;
     LIST_ENTRY* head;
