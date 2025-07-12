@@ -24,7 +24,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION_T {
     ULONG BasePriority;
     HANDLE UniqueProcessId;
     HANDLE InheritedFromUniqueProcessId;
-    // �����ֶ���
+    
 } SYSTEM_PROCESS_INFORMATION_T;
 
 typedef NTSTATUS(WINAPI* _NtQuerySystemInformation)(
@@ -83,7 +83,7 @@ BOOL SafeProcess32Next(SAFE_PROCESSENTRY32* entry) {
     return SafeProcess32First(entry);
 }
 
-// Module32 ϵ�У�����Ŀ����� PEB��
+
 typedef struct _SAFE_MODULE_CONTEXT {
     HANDLE hProcess;
     LIST_ENTRY* head;
@@ -111,11 +111,11 @@ BOOL ReadRemotePEBList(DWORD pid) {
 
     pebAddress = (ULONGLONG)pbi.PebBaseAddress;
 
-    // ��ȡ PEB->Ldr
+    
     ULONGLONG ldrAddr = 0;
     if (!ReadProcessMemory(g_modCtx.hProcess, (BYTE*)pebAddress + 0x18, &ldrAddr, sizeof(ldrAddr), NULL)) return FALSE;
 
-    // ��ȡ Ldr->InMemoryOrderModuleList
+    
     ULONGLONG listAddr = 0;
     if (!ReadProcessMemory(g_modCtx.hProcess, (BYTE*)ldrAddr + 0x20, &listAddr, sizeof(listAddr), NULL)) return FALSE;
 
@@ -124,7 +124,7 @@ BOOL ReadRemotePEBList(DWORD pid) {
 
     return TRUE;
 #else
-    return FALSE; // �ԣ��ɲ�ȫ 32 λ�ṹ��
+    return FALSE; 
 #endif
 }
 
@@ -137,7 +137,7 @@ BOOL SafeModule32Next(SAFE_MODULEENTRY32* entry) {
     if (!g_modCtx.hProcess || !g_modCtx.current || g_modCtx.current == g_modCtx.head)
         return FALSE;
 
-    // ��ȡ LDR_DATA_TABLE_ENTRY ������Ϣ
+    
     ULONGLONG modEntryAddr = (ULONGLONG)g_modCtx.current - 0x10;
     BYTE buffer[512] = {};
     if (!ReadProcessMemory(g_modCtx.hProcess, (LPCVOID)modEntryAddr, buffer, sizeof(buffer), NULL)) return FALSE;
@@ -153,7 +153,7 @@ BOOL SafeModule32Next(SAFE_MODULEENTRY32* entry) {
         entry->moduleName[name->Length / 2] = 0;
     }
 
-    // �ƶ���һ��
+    
     ULONGLONG next = 0;
     ReadProcessMemory(g_modCtx.hProcess, (BYTE*)g_modCtx.current, &next, sizeof(next), NULL);
     g_modCtx.current = (LIST_ENTRY*)next;
@@ -194,15 +194,15 @@ BOOL SafeThread32Next(SAFE_THREADENTRY32* entry) {
     if (!g_threadSnapshot || !entry) return FALSE;
     while (g_threadOffset + sizeof(SYSTEM_PROCESS_INFORMATION_T) < g_threadSnapshotSize) {
         SYSTEM_PROCESS_INFORMATION_T* spi = (SYSTEM_PROCESS_INFORMATION_T*)(g_threadSnapshot + g_threadOffset);
-        // SYSTEM_THREAD_INFORMATION结构体紧跟在SYSTEM_PROCESS_INFORMATION后面
+        
         BYTE* threadInfoPtr = (BYTE*)spi + sizeof(SYSTEM_PROCESS_INFORMATION_T);
         for (ULONG i = 0; i < spi->NumberOfThreads; ++i) {
-            // SYSTEM_THREAD_INFORMATION结构体定义可参考winternl.h
+            
             DWORD tid = *(DWORD*)(threadInfoPtr + 0x48);
             DWORD ownerPid = (DWORD)(ULONG_PTR)spi->UniqueProcessId;
             entry->tid = tid;
             entry->ownerPid = ownerPid;
-            threadInfoPtr += 0xB8; // SYSTEM_THREAD_INFORMATION大小（x64）
+            threadInfoPtr += 0xB8; 
             g_threadOffset += sizeof(SYSTEM_PROCESS_INFORMATION_T) + i * 0xB8;
             return TRUE;
         }

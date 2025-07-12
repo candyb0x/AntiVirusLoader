@@ -1,7 +1,7 @@
-﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
+﻿
 #include "pch.h"
-// Copyright (C) 2023 Elliot Killick <contact@elliotkillick.com>
-// Licensed under the MIT License. See LICENSE file for details.
+
+
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
@@ -11,7 +11,7 @@
 
 #define DLL
 
-// Standard EXE/DLL API boilerplate
+
 #ifdef DLL
 #define API __declspec(dllexport)
 #define EMPTY_IMPL {}

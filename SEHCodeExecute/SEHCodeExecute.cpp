@@ -11,7 +11,7 @@ int b = 0;
 int ExceptFilter()
 {
     b = 1;
-    // 动态获取VirtualAlloc
+    
     typedef LPVOID (WINAPI *pVirtualAlloc)(LPVOID, SIZE_T, DWORD, DWORD);
     pVirtualAlloc myVirtualAlloc = (pVirtualAlloc)SafeGetProcAddress(L"kernel32.dll", "VirtualAlloc");
     if (myVirtualAlloc) {
@@ -27,7 +27,7 @@ int ExceptFilter()
 int main(){
     __try
     {
-        int c = a / b;  //只要能触发异常即可
+        int c = a / b;  
     }
     __except(ExceptFilter()) {
 

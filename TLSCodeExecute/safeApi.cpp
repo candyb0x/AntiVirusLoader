@@ -6,7 +6,6 @@
 #endif
 #include <cwchar>
 
-// 获取模块基址（PEB 遍历）
 HMODULE GetModuleByPEB(const wchar_t* targetName) {
 #ifdef _M_X64
     PPEB pPEB = (PPEB)__readgsqword(0x60);
@@ -36,7 +35,6 @@ HMODULE GetModuleByPEB(const wchar_t* targetName) {
     return NULL;
 }
 
-// 自解析 GetProcAddress
 FARPROC ParseExportByName(HMODULE hModule, LPCSTR lpProcName) {
     if (!hModule || !lpProcName)
         return NULL;
@@ -50,17 +48,15 @@ FARPROC ParseExportByName(HMODULE hModule, LPCSTR lpProcName) {
     PIMAGE_EXPORT_DIRECTORY exportDir = (PIMAGE_EXPORT_DIRECTORY)((BYTE*)hModule + exportDirRVA);
     DWORD* functions = (DWORD*)((BYTE*)hModule + exportDir->AddressOfFunctions);
 
-    // 按序号方式导出（如：MAKEINTRESOURCE）
     if ((ULONG_PTR)lpProcName <= 0xFFFF) {
         WORD ordinal = (WORD)(ULONG_PTR)lpProcName;
         WORD baseOrdinal = (WORD)exportDir->Base;
         if (ordinal < baseOrdinal || ordinal >= baseOrdinal + exportDir->NumberOfFunctions) {
-            return NULL; // 超出范围
+            return NULL; 
         }
         return (FARPROC)((BYTE*)hModule + functions[ordinal - baseOrdinal]);
     }
 
-    // 按名字方式查找
     DWORD* nameRVAs = (DWORD*)((BYTE*)hModule + exportDir->AddressOfNames);
     WORD* nameOrdinals = (WORD*)((BYTE*)hModule + exportDir->AddressOfNameOrdinals);
 
@@ -75,7 +71,6 @@ FARPROC ParseExportByName(HMODULE hModule, LPCSTR lpProcName) {
     return NULL;
 }
 
-// 封装总接口
 FARPROC SafeGetProcAddress(const wchar_t* moduleName, LPCSTR apiName) {
     HMODULE hMod = GetModuleByPEB(moduleName);
     if (!hMod) return NULL;
